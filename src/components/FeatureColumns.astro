@@ -1,0 +1,91 @@
+---
+/**
+ * Slice `feature_columns`: centred section heading and an auto-fit grid of items, each with
+ * a sage icon badge, an h3 and short text. `background` picks the section variant. The
+ * items are informational, not clickable, so they carry no hover state.
+ */
+import Icon from './Icon.astro';
+import { richText, siteDefaults } from '../lib/site';
+
+interface Props {
+  slice?: any;
+  index?: number;
+  settings?: any;
+}
+
+const { slice } = Astro.props;
+const p = slice?.primary ?? {};
+
+const variants: Record<string, string> = { grey: 'section--alt', sage: 'section--sage' };
+const variant = variants[p.background] ?? '';
+
+/** Inner HTML of a single-block heading field (keeps <em>), so this component owns the tag. */
+const headingHtml = (field: any): string =>
+  richText(field)
+    .replace(/^\s*<(h[1-6]|p)[^>]*>/, '')
+    .replace(/<\/(h[1-6]|p)>\s*$/, '');
+
+const eyebrow: string = p.eyebrow || '';
+const heading = headingHtml(p.heading) || (slice ? '' : siteDefaults.name);
+const text = richText(p.text) || (slice ? '' : `<p>${siteDefaults.description}</p>`);
+
+const items = (Array.isArray(p.items) ? p.items : []).map((item: any) => ({
+  icon: item?.icon || 'leaf',
+  title: (item?.title as string) || '',
+  text: richText(item?.text),
+}));
+---
+
+<section class:list={['features', 'section', variant]}>
+  <div class="container">
+    {(eyebrow || heading || text) && (
+      <div class="section-heading section-heading--center reveal">
+        {eyebrow && <p class="eyebrow">{eyebrow}</p>}
+        {heading && <h2 set:html={heading} />}
+        {text && <div class="prose prose--muted" set:html={text} />}
+      </div>
+    )}
+
+    {items.length > 0 && (
+      <div class="grid grid--3 features__grid">
+        {items.map((item, i) => (
+          <div class={`features__item reveal reveal-delay-${Math.min(i + 1, 4)}`}>
+            <span class="icon-badge features__badge">
+              <Icon name={item.icon} />
+            </span>
+            {item.title && <h3 class="features__title">{item.title}</h3>}
+            {item.text && <div class="features__text prose prose--muted" set:html={item.text} />}
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+</section>
+
+<style>
+  .features__grid {
+    align-items: start;
+  }
+
+  .features__item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 24rem;
+    margin-inline: auto;
+    padding: 0 0.5rem;
+    text-align: center;
+  }
+
+  .features__badge {
+    margin-bottom: 1.1rem;
+  }
+
+  .features__title {
+    margin-bottom: 0.5rem;
+  }
+
+  .features__text :global(p) {
+    font-size: var(--fs-body);
+  }
+</style>

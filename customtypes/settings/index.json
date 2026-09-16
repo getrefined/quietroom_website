@@ -1,0 +1,90 @@
+{
+  "id": "settings",
+  "label": "Site settings",
+  "repeatable": false,
+  "status": true,
+  "format": "custom",
+  "json": {
+    "Main": {
+      "site_name": {
+        "type": "Text",
+        "config": {
+          "label": "Site name"
+        }
+      },
+      "tagline": {
+        "type": "Text",
+        "config": {
+          "label": "Tagline"
+        }
+      },
+      "practitioner_name": {
+        "type": "Text",
+        "config": {
+          "label": "Practitioner name"
+        }
+      },
+      "practitioner_title": {
+        "type": "Text",
+        "config": {
+          "label": "Practitioner title"
+        }
+      },
+      "phone": {
+        "type": "Text",
+        "config": {
+          "label": "Phone"
+        }
+      },
+      "email": {
+        "type": "Text",
+        "config": {
+          "label": "Email"
+        }
+      },
+      "address": {
+        "type": "StructuredText",
+        "config": {
+          "label": "Address",
+          "multi": "paragraph"
+        }
+      },
+      "footer_note": {
+        "type": "StructuredText",
+        "config": {
+          "label": "Footer note",
+          "multi": "paragraph,strong,em,hyperlink"
+        }
+      },
+      "accreditations": {
+        "type": "Group",
+        "config": {
+          "label": "Accreditations",
+          "fields": {
+            "logo": {
+              "type": "Image",
+              "config": {
+                "label": "Logo",
+                "constraint": {},
+                "thumbnails": []
+              }
+            },
+            "name": {
+              "type": "Text",
+              "config": {
+                "label": "Name"
+              }
+            },
+            "link": {
+              "type": "Link",
+              "config": {
+                "label": "Link",
+                "allowText": true
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

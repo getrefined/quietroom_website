@@ -1,0 +1,67 @@
+{
+  "id": "page",
+  "label": "Page",
+  "repeatable": true,
+  "status": true,
+  "format": "custom",
+  "json": {
+    "Main": {
+      "uid": {
+        "type": "UID",
+        "config": {
+          "label": "UID"
+        }
+      },
+      "title": {
+        "type": "Text",
+        "config": {
+          "label": "Page title"
+        }
+      },
+      "meta_description": {
+        "type": "Text",
+        "config": {
+          "label": "Meta description"
+        }
+      },
+      "slices": {
+        "type": "Slices",
+        "fieldset": "Slice Zone",
+        "config": {
+          "choices": {
+            "hero": {
+              "type": "SharedSlice"
+            },
+            "page_header": {
+              "type": "SharedSlice"
+            },
+            "intro_block": {
+              "type": "SharedSlice"
+            },
+            "feature_columns": {
+              "type": "SharedSlice"
+            },
+            "service_cards": {
+              "type": "SharedSlice"
+            },
+            "narrative": {
+              "type": "SharedSlice"
+            },
+            "cta_band": {
+              "type": "SharedSlice"
+            },
+            "accreditations": {
+              "type": "SharedSlice"
+            },
+            "practitioner_list": {
+              "type": "SharedSlice"
+            },
+            "contact_details": {
+              "type": "SharedSlice"
+            }
+          }
+        }
+      }
+    }
+  }
+}

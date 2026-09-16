@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.astro/
+.DS_Store
+.idea/
+.env
+.env.*
+docs/project-config.json
+*.key
+*.pem

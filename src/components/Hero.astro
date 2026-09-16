@@ -1,0 +1,203 @@
+---
+/**
+ * Slice `hero` (home only): full-bleed photo behind a deep-teal gradient scrim, eyebrow,
+ * the page's single h1, lead text, two buttons and a row of highlight chips. Leaves room at
+ * the top for the transparent navigation bar that overlays it.
+ */
+import Icon from './Icon.astro';
+import { imageSrc, isExternal, linkLabel, resolveLink, richText, siteDefaults } from '../lib/site';
+
+interface Props {
+  slice?: any;
+  index?: number;
+  settings?: any;
+}
+
+const { slice } = Astro.props;
+const p = slice?.primary ?? {};
+
+/** Calm daylight over still water; used when no hero image has been uploaded. */
+const FALLBACK_IMAGE =
+  'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1920&q=80';
+
+const src = imageSrc(p.image);
+// An unreplaced `__PLACEHOLDER__` url in the fallback data must not render a broken hero.
+const usePlaceholder = !src || /__[A-Z_]+__/.test(src);
+const image = usePlaceholder ? FALLBACK_IMAGE : src;
+const imageAlt: string = usePlaceholder ? '' : (p.image?.alt ?? '');
+const dims = usePlaceholder ? { width: 1920, height: 1280 } : p.image?.dimensions;
+
+/** Inner HTML of a single-block heading field (keeps <em>), so this component owns the tag. */
+const headingHtml = (field: any): string =>
+  richText(field)
+    .replace(/^\s*<(h[1-6]|p)[^>]*>/, '')
+    .replace(/<\/(h[1-6]|p)>\s*$/, '');
+
+const eyebrow: string = p.eyebrow || '';
+const heading = headingHtml(p.heading) || siteDefaults.name;
+const text = richText(p.text) || (slice ? '' : `<p>${siteDefaults.description}</p>`);
+
+const primaryHref = resolveLink(p.primary_link);
+const secondaryHref = resolveLink(p.secondary_link);
+const highlights: { label: string }[] = (Array.isArray(p.highlights) ? p.highlights : []).filter(
+  (item: any) => item?.label
+);
+---
+
+<section class="hero section--anchor" aria-labelledby="hero-title">
+  <img
+    class="hero__image"
+    src={image}
+    alt={imageAlt}
+    width={dims?.width}
+    height={dims?.height}
+    loading="eager"
+    fetchpriority="high"
+    decoding="async"
+  />
+  <div class="hero__scrim" aria-hidden="true"></div>
+
+  <div class="container">
+    <div class="hero__content">
+      {eyebrow && <p class="eyebrow reveal">{eyebrow}</p>}
+      <h1 id="hero-title" class="hero__title reveal reveal-delay-1" set:html={heading} />
+      {text && <div class="hero__text prose reveal reveal-delay-2" set:html={text} />}
+
+      {(primaryHref || secondaryHref) && (
+        <div class="btn-group hero__actions reveal reveal-delay-3">
+          {primaryHref && (
+            <a
+              class="btn btn-light"
+              href={primaryHref}
+              target={isExternal(primaryHref) ? '_blank' : undefined}
+              rel={isExternal(primaryHref) ? 'noopener noreferrer' : undefined}
+            >
+              {linkLabel(p.primary_link, 'Contact me')}
+            </a>
+          )}
+          {secondaryHref && (
+            <a
+              class="btn btn-outline-light"
+              href={secondaryHref}
+              target={isExternal(secondaryHref) ? '_blank' : undefined}
+              rel={isExternal(secondaryHref) ? 'noopener noreferrer' : undefined}
+            >
+              {linkLabel(p.secondary_link, 'Find out more')}
+            </a>
+          )}
+        </div>
+      )}
+
+      {highlights.length > 0 && (
+        <ul class="hero__highlights reveal reveal-delay-4" role="list">
+          {highlights.map((item) => (
+            <li class="hero__chip">
+              <span class="hero__chip-icon">
+                <Icon name="check" size={16} strokeWidth={2.5} />
+              </span>
+              <span>{item.label}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    align-items: center;
+    min-height: clamp(560px, 82vh, 860px);
+    padding-top: calc(var(--nav-height) + 2rem);
+    padding-bottom: clamp(3rem, 6vw, 5rem);
+    overflow: hidden;
+  }
+
+  .hero__image {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+  }
+
+  /* On narrow screens the copy spans the full width, so the scrim is even rather than left-weighted. */
+  .hero__scrim {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(to bottom, rgba(13, 59, 64, 0.9) 0%, rgba(13, 59, 64, 0.78) 100%);
+  }
+
+  .hero__content {
+    max-width: 40rem;
+  }
+
+  .hero__title {
+    margin-bottom: 1.25rem;
+    font-size: var(--fs-display);
+    color: var(--color-white);
+  }
+  .hero__title :global(em) {
+    font-style: normal;
+    color: var(--color-sage);
+  }
+
+  .hero__text {
+    max-width: 36rem;
+    margin-bottom: 1.75rem;
+  }
+  .hero__text :global(p) {
+    font-size: var(--fs-lead);
+    color: var(--color-on-anchor-muted);
+  }
+  .hero__text :global(a) {
+    color: var(--color-white);
+  }
+
+  .hero__actions {
+    margin-bottom: 2rem;
+  }
+
+  .hero__highlights {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 0.75rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .hero__chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.4rem 0.9rem 0.4rem 0.7rem;
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    border-radius: var(--radius-pill);
+    background: rgba(13, 59, 64, 0.35);
+    font-family: var(--font-heading);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-white);
+  }
+  .hero__chip-icon {
+    display: inline-flex;
+    color: var(--color-sage);
+  }
+
+  @media (min-width: 768px) {
+    .hero__scrim {
+      background: linear-gradient(
+        to right,
+        rgba(13, 59, 64, 0.92) 0%,
+        rgba(13, 59, 64, 0.72) 45%,
+        rgba(13, 59, 64, 0.35) 100%
+      );
+    }
+  }
+</style>

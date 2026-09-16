@@ -1,0 +1,63 @@
+{
+  "id": "narrative",
+  "type": "SharedSlice",
+  "name": "Narrative",
+  "description": "Long-form copy with optional image and layout options",
+  "variations": [
+    {
+      "id": "default",
+      "name": "Default",
+      "docURL": "...",
+      "version": "initial",
+      "description": "Default",
+      "imageUrl": "",
+      "primary": {
+        "eyebrow": {
+          "type": "Text",
+          "config": {
+            "label": "Eyebrow"
+          }
+        },
+        "heading": {
+          "type": "StructuredText",
+          "config": {
+            "label": "Heading",
+            "single": "heading2,em"
+          }
+        },
+        "body": {
+          "type": "StructuredText",
+          "config": {
+            "label": "Body",
+            "multi": "paragraph,strong,em,hyperlink,list-item,o-list-item,heading3"
+          }
+        },
+        "image": {
+          "type": "Image",
+          "config": {
+            "label": "Image",
+            "constraint": {},
+            "thumbnails": []
+          }
+        },
+        "layout": {
+          "type": "Select",
+          "config": {
+            "label": "Layout",
+            "options": ["prose", "image-right", "image-left", "two-column"],
+            "default_value": "prose"
+          }
+        },
+        "background": {
+          "type": "Select",
+          "config": {
+            "label": "Background",
+            "options": ["white", "grey"],
+            "default_value": "white"
+          }
+        }
+      },
+      "items": {}
+    }
+  ]
+}

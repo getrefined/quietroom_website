@@ -1,0 +1,399 @@
+---
+/**
+ * `contact_details` slice: contact details (address, phone, email, directions) beside the
+ * contact form. The form is the client half of the contact-form contract
+ * (docs/contact-form-contract.md): multipart FormData POST to `${endpoint}/contact`, the
+ * `_confirm_email` honeypot, advisory attachment limits and per-form binding. When no
+ * endpoint is configured the script leaves the form alone and the native `mailto:` action
+ * is the last resort. Fields (primary): eyebrow, heading, text, address, phone, email,
+ * directions, show_form, form_heading, success_message.
+ */
+import Icon from './Icon.astro';
+import { richText, plainText, href, contactEndpoint, siteDefaults } from '../lib/site';
+
+interface Props {
+  slice?: any;
+  index?: number;
+  settings?: any;
+}
+
+const { slice, index = 0, settings } = Astro.props;
+
+const p = slice?.primary ?? {};
+/** StructuredText → HTML, but '' for an empty field or a lone empty paragraph. */
+const rich = (field: any) => (plainText(field).trim() ? richText(field) : '');
+
+const eyebrow: string = (p.eyebrow ?? 'Contact').trim();
+const heading = rich(p.heading) || '<h2>Get in touch</h2>';
+const text = rich(p.text);
+
+// Slice → site settings → hardcoded defaults.
+const address =
+  rich(p.address) ||
+  rich(settings?.address) ||
+  siteDefaults.addressLines.map((line) => `<p>${line}</p>`).join('');
+const phone: string = (p.phone || settings?.phone || siteDefaults.phone || '').trim();
+const phoneHref =
+  phone === siteDefaults.phone ? siteDefaults.phoneHref : `tel:${phone.replace(/[^\d+]/g, '')}`;
+const email: string = (p.email || settings?.email || siteDefaults.email || '').trim();
+const directions = rich(p.directions);
+
+const showForm = p.show_form !== false;
+const formHeading: string = (p.form_heading || 'Send a message').trim();
+const successMessage: string = (
+  p.success_message || 'Thank you for contacting me. I will be in touch shortly.'
+).trim();
+const action = contactEndpoint ? `${contactEndpoint}/contact` : `mailto:${email}`;
+const fieldId = (name: string) => `contact-${index}-${name}`;
+---
+
+<section class="section contact">
+  <div class="container contact__grid">
+    <div class="contact__details reveal">
+      {eyebrow && <span class="eyebrow">{eyebrow}</span>}
+      <Fragment set:html={heading} />
+      {text && <div class="prose contact__text" set:html={text} />}
+
+      <address class="contact__address">
+        <dl class="details">
+          <div class="details__item">
+            <dt>
+              <span class="details__icon" aria-hidden="true">
+                <Icon name="map-pin" size={20} />
+              </span>
+              Address
+            </dt>
+            <dd class="prose details__lines" set:html={address} />
+          </div>
+
+          {phone && (
+            <div class="details__item">
+              <dt>
+                <span class="details__icon" aria-hidden="true">
+                  <Icon name="phone" size={20} />
+                </span>
+                Phone
+              </dt>
+              <dd>
+                <a href={phoneHref}>{phone}</a>
+              </dd>
+            </div>
+          )}
+
+          {email && (
+            <div class="details__item">
+              <dt>
+                <span class="details__icon" aria-hidden="true">
+                  <Icon name="mail" size={20} />
+                </span>
+                Email
+              </dt>
+              <dd>
+                <a href={`mailto:${email}`}>{email}</a>
+              </dd>
+            </div>
+          )}
+
+          {directions && (
+            <div class="details__item">
+              <dt>
+                <span class="details__icon" aria-hidden="true">
+                  <Icon name="video" size={20} />
+                </span>
+                In person or online
+              </dt>
+              <dd class="prose details__lines" set:html={directions} />
+            </div>
+          )}
+        </dl>
+      </address>
+    </div>
+
+    {showForm && (
+      <div class="contact__form reveal reveal-delay-1">
+        <h3>{formHeading}</h3>
+        <form
+          class="contact-form"
+          method="post"
+          action={action}
+          enctype={contactEndpoint ? undefined : 'text/plain'}
+          data-endpoint={contactEndpoint}
+          data-success={successMessage}
+        >
+          <div class="field">
+            <label for={fieldId('name')}>Name</label>
+            <input id={fieldId('name')} type="text" name="name" required autocomplete="name" />
+          </div>
+          <div class="field">
+            <label for={fieldId('email')}>Email</label>
+            <input id={fieldId('email')} type="email" name="email" required autocomplete="email" />
+          </div>
+          <div class="field">
+            <label for={fieldId('subject')}>
+              Subject <span class="field__optional">(optional)</span>
+            </label>
+            <input id={fieldId('subject')} type="text" name="subject" />
+          </div>
+          <div class="field">
+            <label for={fieldId('message')}>Message</label>
+            <textarea id={fieldId('message')} name="message" rows="6" required></textarea>
+          </div>
+
+          <div
+            aria-hidden="true"
+            style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden"
+          >
+            <label>
+              Do not fill this in
+              <input type="text" name="_confirm_email" tabindex="-1" autocomplete="off" />
+            </label>
+          </div>
+
+          <button type="submit" class="form-submit btn btn-primary">
+            Send message
+          </button>
+          <p class="form-status" aria-live="polite"></p>
+        </form>
+        <p class="contact__privacy">
+          Your details are used only to reply to your message. Read the
+          <a href={href('/privacy-statement/')}>privacy statement</a>.
+        </p>
+      </div>
+    )}
+  </div>
+</section>
+
+<script>
+  // Client half of docs/contact-form-contract.md, adapted to read the endpoint from
+  // data-endpoint. The Worker's /contact route is the other half; read the contract before
+  // changing either.
+  (function () {
+    const MAX_FILES = 5;
+    const MAX_TOTAL_BYTES = 15 * 1024 * 1024; // mirrors the Worker; the Worker is authoritative
+
+    function setStatus(form: HTMLFormElement, message: string, state?: 'success' | 'error') {
+      const el = form.querySelector<HTMLElement>('.form-status');
+      if (!el) return;
+      el.textContent = message;
+      if (state) el.setAttribute('data-state', state);
+      else el.removeAttribute('data-state');
+    }
+
+    // querySelectorAll, not querySelector: the old script bound only the first match in
+    // the document, so a second contact form was dead and an unrelated form that reused
+    // .contact-form for styling could be bound instead.
+    document.querySelectorAll<HTMLFormElement>('.contact-form').forEach(function (form) {
+      // No endpoint configured yet: leave the native form (mailto: action) alone.
+      const endpoint = form.dataset.endpoint;
+      if (!endpoint) return;
+      const ENDPOINT = endpoint + '/contact';
+
+      const button = form.querySelector<HTMLButtonElement>('.form-submit');
+      if (!button) return;
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        if (button.disabled) return;
+
+        // FormData is sent as-is. Do NOT convert to JSON: Object.fromEntries collapses
+        // checkbox groups to a single value and destroys File objects outright.
+        const data = new FormData(form);
+
+        const files: File[] = [];
+        data.forEach(function (value) {
+          if (
+            value &&
+            typeof value === 'object' &&
+            typeof value.name === 'string' &&
+            value.size > 0
+          ) {
+            files.push(value);
+          }
+        });
+
+        // Advisory only — the endpoint is public and the Worker enforces this itself.
+        if (files.length > MAX_FILES) {
+          setStatus(form, 'Please attach at most ' + MAX_FILES + ' files.', 'error');
+          return;
+        }
+        const total = files.reduce(function (sum, f) {
+        return sum + f.size;
+      }, 0);
+        if (total > MAX_TOTAL_BYTES) {
+          setStatus(
+            form,
+            'Attachments must total less than ' + Math.floor(MAX_TOTAL_BYTES / 1048576) + 'MB.',
+            'error'
+          );
+          return;
+        }
+
+        const originalText = button.textContent;
+        button.textContent = 'Sending...';
+        button.disabled = true;
+        setStatus(form, '');
+
+        const restore = function (message: string) {
+        button.textContent = message;
+        setTimeout(function () {
+          button.textContent = originalText;
+          button.disabled = false;
+        }, 3000);
+      };
+
+        // No Content-Type header: the browser sets multipart/form-data with the boundary.
+        fetch(ENDPOINT, { method: 'POST', body: data })
+          .then(function (res) {
+            return res.json().then(function (result) {
+              return { ok: res.ok, result: result };
+            });
+          })
+          .then(function (payload) {
+            if (payload.ok) {
+              button.textContent = 'Sent!';
+              form.reset();
+              setStatus(
+                form,
+                form.dataset.success || 'Thank you, your message has been sent.',
+                'success'
+              );
+              setTimeout(function () {
+                button.textContent = originalText;
+                button.disabled = false;
+              }, 3000);
+            } else {
+              setStatus(
+                form,
+                payload.result.message ||
+                  'Sorry, your message could not be sent. Please try again.',
+                'error'
+              );
+              restore('Error — please try again');
+            }
+          })
+          .catch(function () {
+            setStatus(
+              form,
+              'Sorry, your message could not be sent. Please try again or email me directly.',
+              'error'
+            );
+            restore('Error — please try again');
+          });
+      });
+    });
+  })();
+</script>
+
+<style>
+  .contact__grid {
+    display: grid;
+    gap: clamp(2.5rem, 5vw, 4rem);
+    align-items: start;
+  }
+
+  .contact__details :global(h2) {
+    margin-bottom: 0.6rem;
+  }
+
+  .contact__text {
+    margin-bottom: clamp(1.5rem, 3vw, 2rem);
+  }
+
+  .contact__text :global(p) {
+    font-size: var(--fs-lead);
+    color: var(--color-text-muted);
+  }
+
+  .contact__address {
+    font-style: normal;
+  }
+
+  /* Definition-style list: icon + label on top, value indented beneath. */
+  .details {
+    margin: 0;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .details__item {
+    padding-block: 1.1rem;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .details dt {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-family: var(--font-heading);
+    font-size: var(--fs-small);
+    font-weight: 700;
+    color: var(--color-anchor);
+  }
+
+  .details__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 50%;
+    background: var(--color-sage);
+    color: var(--color-anchor);
+  }
+
+  .details dd {
+    margin: 0.45rem 0 0 3rem;
+  }
+
+  .details__lines :global(p) {
+    margin: 0;
+  }
+
+  .details dd a {
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+
+  /* Form panel */
+  .contact__form {
+    padding: clamp(1.5rem, 3vw, 2.5rem);
+    background: var(--color-bg-alt);
+    border-radius: var(--radius-lg);
+  }
+
+  .contact__form h3 {
+    margin-bottom: 1.25rem;
+  }
+
+  /* Containing block for the off-screen honeypot. */
+  .contact-form {
+    position: relative;
+  }
+
+  .field__optional {
+    font-weight: 400;
+    color: var(--color-text-muted);
+  }
+
+  .contact-form .form-submit {
+    width: 100%;
+  }
+
+  .contact__privacy {
+    margin: 1.25rem 0 0;
+    font-size: var(--fs-small);
+    color: var(--color-text-muted);
+  }
+
+  @media (min-width: 480px) {
+    .contact-form .form-submit {
+      width: auto;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .contact__grid {
+      grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    }
+  }
+</style>

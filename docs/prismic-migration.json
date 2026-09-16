@@ -1,0 +1,67 @@
+{
+  "repository": "quietroom",
+  "lang": "en-us",
+  "generatedAt": "2026-09-16T14:24:06.413Z",
+  "note": "Migration API writes are drafts in the migration release until published in the Prismic dashboard; \"published\" means a published version exists, the latest write may still be pending.",
+  "documents": {
+    "home": {
+      "id": "aqql4hUAAC4AVvDt",
+      "type": "page",
+      "uid": "home",
+      "status": "draft"
+    },
+    "about": {
+      "id": "aqql3xUAADIAVvDZ",
+      "type": "page",
+      "uid": "about",
+      "status": "draft"
+    },
+    "psychotherapy": {
+      "id": "aqql3RUAAC8AVvDK",
+      "type": "page",
+      "uid": "psychotherapy",
+      "status": "draft"
+    },
+    "supervision": {
+      "id": "aqql2xUAAC0AVvC6",
+      "type": "page",
+      "uid": "supervision",
+      "status": "draft"
+    },
+    "services": {
+      "id": "aqql2RUAAC8AVvCt",
+      "type": "page",
+      "uid": "services",
+      "status": "draft"
+    },
+    "booking": {
+      "id": "aqql1xUAACwAVvCf",
+      "type": "page",
+      "uid": "booking",
+      "status": "draft"
+    },
+    "links": {
+      "id": "aqql1RUAADIAVvCV",
+      "type": "page",
+      "uid": "links",
+      "status": "draft"
+    },
+    "contact": {
+      "id": "aqql0xUAACwAVvCK",
+      "type": "page",
+      "uid": "contact",
+      "status": "draft"
+    },
+    "privacy-statement": {
+      "id": "aqql0RUAAC0AVvB_",
+      "type": "page",
+      "uid": "privacy-statement",
+      "status": "draft"
+    },
+    "settings": {
+      "id": "aqqlzxUAADAAVvB1",
+      "type": "settings",
+      "status": "draft"
+    }
+  }
+}

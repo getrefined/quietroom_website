@@ -1,0 +1,106 @@
+---
+/**
+ * Slice `page_header` (inner pages): deep-teal band directly under the navigation bar with
+ * eyebrow, the page's single h1 and a lead paragraph. An optional image sits behind the
+ * copy, dimmed to 25% so the white text keeps its contrast.
+ */
+import { imageSrc, richText, siteDefaults } from '../lib/site';
+
+interface Props {
+  slice?: any;
+  index?: number;
+  settings?: any;
+}
+
+const { slice } = Astro.props;
+const p = slice?.primary ?? {};
+
+/** Inner HTML of a single-block heading field (keeps <em>), so this component owns the tag. */
+const headingHtml = (field: any): string =>
+  richText(field)
+    .replace(/^\s*<(h[1-6]|p)[^>]*>/, '')
+    .replace(/<\/(h[1-6]|p)>\s*$/, '');
+
+const eyebrow: string = p.eyebrow || '';
+const heading = headingHtml(p.heading) || siteDefaults.name;
+const text = richText(p.text);
+
+const image = imageSrc(p.image);
+const dims = p.image?.dimensions;
+---
+
+<section class="page-header section--anchor" aria-labelledby="page-title">
+  {image && (
+    <img
+      class="page-header__image"
+      src={image}
+      alt=""
+      width={dims?.width}
+      height={dims?.height}
+      loading="eager"
+      decoding="async"
+    />
+  )}
+
+  <div class="container">
+    <div class="page-header__content">
+      {eyebrow && <p class="eyebrow reveal">{eyebrow}</p>}
+      <h1 id="page-title" class="page-header__title reveal reveal-delay-1" set:html={heading} />
+      {text && <div class="page-header__lead prose reveal reveal-delay-2" set:html={text} />}
+    </div>
+  </div>
+</section>
+
+<style>
+  .page-header {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    align-items: center;
+    padding-block: var(--section-pad-sm);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    overflow: hidden;
+  }
+
+  .page-header__image {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    opacity: 0.25;
+  }
+
+  .page-header__content {
+    max-width: 44rem;
+  }
+
+  .page-header__title {
+    margin-bottom: 0.75rem;
+    font-size: var(--fs-h1);
+    color: var(--color-white);
+  }
+  .page-header__title :global(em) {
+    font-style: normal;
+    color: var(--color-sage);
+  }
+
+  .page-header__lead {
+    max-width: 38rem;
+  }
+  .page-header__lead :global(p) {
+    font-size: var(--fs-lead);
+    color: var(--color-on-anchor-muted);
+  }
+  .page-header__lead :global(a) {
+    color: var(--color-white);
+  }
+
+  @media (min-width: 1024px) {
+    .page-header {
+      min-height: 16rem;
+    }
+  }
+</style>

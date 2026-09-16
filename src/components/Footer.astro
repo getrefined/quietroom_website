@@ -1,0 +1,351 @@
+---
+/**
+ * Site footer: three columns (Quiet Room / Services / Contact), accreditation logos on
+ * white chips, and a bottom bar with the copyright line and the "Site by Refined" credit.
+ * Contact details come from the Prismic `settings` document (or the fallback in
+ * src/data/pages.mjs); with no settings at all it falls back to `siteDefaults`.
+ */
+import Icon from './Icon.astro';
+import Logo from './Logo.astro';
+import {
+  href,
+  nav,
+  legalNav,
+  imageSrc,
+  resolveLink,
+  richText,
+  siteDefaults,
+  isExternal,
+} from '../lib/site';
+import type { NavItem } from '../lib/site';
+
+interface Props {
+  settings?: any;
+}
+
+const { settings } = Astro.props;
+const s = settings ?? {};
+
+const siteName: string = s.site_name || siteDefaults.name;
+const tagline: string = s.tagline || '';
+const practitioner: string = s.practitioner_name || siteDefaults.practitioner;
+const phone: string = s.phone || siteDefaults.phone;
+const email: string = s.email || siteDefaults.email;
+const addressHtml =
+  richText(s.address) || siteDefaults.addressLines.map((line) => `<p>${line}</p>`).join('');
+const noteHtml = richText(s.footer_note);
+const accreditations: any[] = Array.isArray(s.accreditations) ? s.accreditations : [];
+
+const serviceLinks: NavItem[] = ['psychotherapy', 'supervision', 'booking', 'links'].flatMap(
+  (uid) => {
+    const item = nav.find((entry) => entry.uid === uid);
+    return item ? [item] : [];
+  }
+);
+
+const year = new Date().getFullYear();
+
+/** "07797 736595" → "tel:+447797736595" (Jersey shares the UK +44 country code). */
+function telHref(value: string): string {
+  const digits = value.replace(/[^\d+]/g, '');
+  return `tel:${digits.startsWith('0') ? `+44${digits.slice(1)}` : digits}`;
+}
+---
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer__grid">
+      <div class="footer__col footer__col--brand">
+        <a class="footer__brand" href={href('/')} aria-label={`${siteName}, home`}>
+          <Logo variant="light" height={48} />
+        </a>
+        {tagline && <p class="footer__tagline">{tagline}</p>}
+        {noteHtml && <div class="footer__note prose" set:html={noteHtml} />}
+        <nav aria-label="Footer">
+          <ul class="footer__links footer__links--inline" role="list">
+            {nav.map((item) => (
+              <li>
+                <a href={href(item.path)}>{item.label}</a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      </div>
+
+      <div class="footer__col">
+        <h2 class="footer__heading">Services</h2>
+        <ul class="footer__links" role="list">
+          {serviceLinks.map((item) => (
+            <li>
+              <a href={href(item.path)}>{item.label}</a>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div class="footer__col">
+        <h2 class="footer__heading">Contact</h2>
+        <address class="footer__address">
+          <p class="footer__name">{practitioner}</p>
+          <div class="footer__address-lines" set:html={addressHtml} />
+        </address>
+        <ul class="footer__links footer__links--contact" role="list">
+          <li>
+            <a href={telHref(phone)}>
+              <span class="footer__link-icon">
+                <Icon name="phone" size={16} />
+              </span>
+              <span>{phone}</span>
+            </a>
+          </li>
+          <li>
+            <a href={`mailto:${email}`}>
+              <span class="footer__link-icon">
+                <Icon name="mail" size={16} />
+              </span>
+              <span>{email}</span>
+            </a>
+          </li>
+          {legalNav.map((item) => (
+            <li>
+              <a href={href(item.path)}>{item.label}</a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+
+    {accreditations.length > 0 && (
+      <div class="footer__accreditations">
+        <ul class="footer__badges" role="list" aria-label="Accreditations">
+          {accreditations.map((item) => {
+            const logo = imageSrc(item?.logo);
+            const url = resolveLink(item?.link);
+            const external = isExternal(url);
+            const name: string = item?.name || '';
+            const alt: string = item?.logo?.alt || name;
+            const dims = item?.logo?.dimensions;
+            return (
+              <li class="footer__badge">
+                {url ? (
+                  <a
+                    class="logo-chip"
+                    href={url}
+                    target={external ? '_blank' : undefined}
+                    rel={external ? 'noopener noreferrer' : undefined}
+                  >
+                    {logo ? (
+                      <img
+                        src={logo}
+                        alt={alt}
+                        width={dims?.width}
+                        height={dims?.height}
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    ) : (
+                      <span class="footer__badge-text">{name}</span>
+                    )}
+                  </a>
+                ) : (
+                  <span class="logo-chip">
+                    {logo ? (
+                      <img
+                        src={logo}
+                        alt={alt}
+                        width={dims?.width}
+                        height={dims?.height}
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    ) : (
+                      <span class="footer__badge-text">{name}</span>
+                    )}
+                  </span>
+                )}
+                {logo && name && <span class="footer__badge-name">{name}</span>}
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    )}
+  </div>
+
+  <div class="footer__bottom">
+    <div class="container footer__bottom-inner">
+      <p>
+        &copy; {year} {practitioner}. All rights reserved.
+      </p>
+      <p>
+        <a href="https://getrefined.com" target="_blank" rel="noopener noreferrer">
+          Site by Refined
+        </a>
+      </p>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    padding-top: var(--section-pad-sm);
+    background: var(--color-anchor);
+    color: var(--color-on-anchor-muted);
+    font-size: var(--fs-small);
+  }
+
+  .footer__grid {
+    display: grid;
+    gap: clamp(2rem, 4vw, 3rem);
+    padding-bottom: var(--section-pad-sm);
+  }
+
+  .footer__brand {
+    display: inline-flex;
+    margin-bottom: 1rem;
+    text-decoration: none;
+    border-radius: var(--radius-sm);
+  }
+
+  .footer__tagline {
+    max-width: 24rem;
+    margin-bottom: 0.75rem;
+    font-family: var(--font-heading);
+    font-size: 1.0625rem;
+    font-weight: 600;
+    color: var(--color-white);
+  }
+
+  .footer__note {
+    max-width: 26rem;
+    margin-bottom: 1.25rem;
+  }
+  .footer__note :global(p) {
+    font-size: var(--fs-small);
+    color: var(--color-on-anchor-muted);
+  }
+  .footer__note :global(a) {
+    color: var(--color-white);
+  }
+
+  .footer__heading {
+    margin: 0 0 1rem;
+    font-size: var(--fs-eyebrow);
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-sage);
+  }
+
+  .footer__links {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .footer__links--inline {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.35rem 1rem;
+  }
+  .footer__links a {
+    color: var(--color-white);
+    text-decoration: none;
+  }
+  .footer__links a:hover {
+    text-decoration: underline;
+    text-decoration-color: var(--color-sage);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.2em;
+  }
+  .footer__links--contact a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .footer__link-icon {
+    display: inline-flex;
+    color: var(--color-sage);
+  }
+
+  .footer__address {
+    margin-bottom: 1rem;
+    font-style: normal;
+  }
+  .footer__name {
+    margin: 0 0 0.25rem;
+    font-weight: 600;
+    color: var(--color-white);
+  }
+  .footer__address-lines :global(p) {
+    margin: 0;
+    color: var(--color-on-anchor-muted);
+  }
+
+  .footer__accreditations {
+    padding: clamp(1.5rem, 3vw, 2rem) 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+  }
+  .footer__badges {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 1rem 1.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .footer__badge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .footer__badge a.logo-chip:hover {
+    border-color: var(--color-teal);
+  }
+  .footer__badge-text {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    color: var(--color-anchor);
+  }
+  .footer__badge-name {
+    font-size: var(--fs-eyebrow);
+    color: var(--color-on-anchor-muted);
+  }
+
+  .footer__bottom {
+    padding: 1.1rem 0;
+    background: var(--color-anchor-deep);
+    font-size: 0.875rem;
+  }
+  .footer__bottom-inner {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.5rem 1.5rem;
+  }
+  .footer__bottom p {
+    margin: 0;
+  }
+  .footer__bottom a {
+    color: var(--color-white);
+    text-decoration: none;
+  }
+  .footer__bottom a:hover {
+    text-decoration: underline;
+    text-decoration-color: var(--color-sage);
+  }
+
+  .footer a:focus-visible {
+    outline-color: var(--color-sage);
+  }
+
+  @media (min-width: 768px) {
+    .footer__grid {
+      grid-template-columns: 1.4fr 0.9fr 1.2fr;
+    }
+  }
+</style>

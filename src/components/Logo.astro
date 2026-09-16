@@ -1,0 +1,107 @@
+---
+/**
+ * Quiet Room Therapy logo: the door-hanger mark redrawn as SVG, plus a wordmark.
+ * variant="dark"  → dark wordmark for light backgrounds
+ * variant="light" → white wordmark for the deep-teal bar and footer
+ */
+interface Props {
+  variant?: 'dark' | 'light';
+  showWordmark?: boolean;
+  height?: number;
+  class?: string;
+}
+const { variant = 'dark', showWordmark = true, height = 44, class: className } = Astro.props;
+---
+
+<span class:list={['logo', `logo--${variant}`, className]} style={`--logo-h: ${height}px`}>
+  <svg
+    class="logo__mark"
+    viewBox="0 0 82 172"
+    xmlns="http://www.w3.org/2000/svg"
+    role="img"
+    aria-label="Quiet Room Therapy"
+  >
+    <path fill="#beddc3" d="M41 0C18.4 0 0 18.4 0 41v131h82V41C82 18.4 63.6 0 41 0z" />
+    <path fill="#ffffff" d="M16 63V44a21 21 0 0 1 42 0v13z" />
+    <path fill="#18a1ab" d="M0 82 64 66l18 6v100H0z" />
+    <text
+      x="7"
+      y="108"
+      font-family="Manrope, 'Gill Sans', 'Trebuchet MS', Arial, sans-serif"
+      font-size="27"
+      font-weight="500"
+      fill="#ffffff"
+      letter-spacing="-0.5"
+    >
+      Quiet
+    </text>
+    <text
+      x="7"
+      y="136"
+      font-family="Manrope, 'Gill Sans', 'Trebuchet MS', Arial, sans-serif"
+      font-size="27"
+      font-weight="500"
+      fill="#ffffff"
+      letter-spacing="-0.5"
+    >
+      Room
+    </text>
+    <text
+      x="8"
+      y="158"
+      font-family="Manrope, 'Gill Sans', 'Trebuchet MS', Arial, sans-serif"
+      font-size="14.5"
+      font-weight="500"
+      fill="#beddc3"
+      letter-spacing="0.6"
+    >
+      THERAPY
+    </text>
+  </svg>
+  {showWordmark && (
+    <span class="logo__word">
+      <span class="logo__name">Quiet Room</span>
+      <span class="logo__sub">Therapy</span>
+    </span>
+  )}
+</span>
+
+<style>
+  .logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    text-decoration: none;
+    line-height: 1;
+  }
+  .logo__mark {
+    height: var(--logo-h);
+    width: auto;
+    flex-shrink: 0;
+  }
+  .logo__word {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15em;
+    font-family: var(--font-heading);
+  }
+  .logo__name {
+    font-size: calc(var(--logo-h) * 0.42);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--color-anchor);
+  }
+  .logo__sub {
+    font-size: calc(var(--logo-h) * 0.26);
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-teal-dark);
+  }
+  .logo--light .logo__name {
+    color: #ffffff;
+  }
+  .logo--light .logo__sub {
+    color: var(--color-sage);
+  }
+</style>

@@ -1,0 +1,84 @@
+{
+  "id": "contact_details",
+  "type": "SharedSlice",
+  "name": "ContactDetails",
+  "description": "Contact details with address, phone, email, directions and a contact form",
+  "variations": [
+    {
+      "id": "default",
+      "name": "Default",
+      "docURL": "...",
+      "version": "initial",
+      "description": "Default",
+      "imageUrl": "",
+      "primary": {
+        "eyebrow": {
+          "type": "Text",
+          "config": {
+            "label": "Eyebrow"
+          }
+        },
+        "heading": {
+          "type": "StructuredText",
+          "config": {
+            "label": "Heading",
+            "single": "heading2,em"
+          }
+        },
+        "text": {
+          "type": "StructuredText",
+          "config": {
+            "label": "Text",
+            "multi": "paragraph,strong,em,hyperlink"
+          }
+        },
+        "address": {
+          "type": "StructuredText",
+          "config": {
+            "label": "Address",
+            "multi": "paragraph"
+          }
+        },
+        "phone": {
+          "type": "Text",
+          "config": {
+            "label": "Phone"
+          }
+        },
+        "email": {
+          "type": "Text",
+          "config": {
+            "label": "Email"
+          }
+        },
+        "directions": {
+          "type": "StructuredText",
+          "config": {
+            "label": "Directions",
+            "multi": "paragraph,strong,em,hyperlink"
+          }
+        },
+        "show_form": {
+          "type": "Boolean",
+          "config": {
+            "label": "Show form",
+            "default_value": true
+          }
+        },
+        "form_heading": {
+          "type": "Text",
+          "config": {
+            "label": "Form heading"
+          }
+        },
+        "success_message": {
+          "type": "Text",
+          "config": {
+            "label": "Success message"
+          }
+        }
+      },
+      "items": {}
+    }
+  ]
+}

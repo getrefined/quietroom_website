@@ -1,0 +1,139 @@
+---
+/**
+ * `cta_band` slice: a full-width deep-teal band with an h2, a line of text and up to two
+ * buttons (primary .btn-light, secondary .btn-outline-light). Links that do not resolve are
+ * skipped. A faint sage circle in the corner echoes the logo.
+ * Fields (primary): heading, text, primary_link, secondary_link.
+ */
+import { richText, plainText, resolveLink, linkLabel, isExternal } from '../lib/site';
+
+interface Props {
+  slice?: any;
+  index?: number;
+  settings?: any;
+}
+
+const { slice } = Astro.props;
+
+const fallback = {
+  heading: [{ type: 'heading2', text: 'Book your first appointment today', spans: [] }],
+  text: [
+    {
+      type: 'paragraph',
+      text: 'Get in touch to arrange a free initial consultation, in my therapy room in St Helier or online.',
+      spans: [],
+    },
+  ],
+  primary_link: { link_type: 'Document', type: 'page', uid: 'contact', text: 'Contact me' },
+  secondary_link: { link_type: 'Any' },
+};
+
+const p = slice?.primary ?? fallback;
+/** StructuredText → HTML, but '' for an empty field or a lone empty paragraph. */
+const rich = (field: any) => (plainText(field).trim() ? richText(field) : '');
+
+const heading = rich(p.heading);
+const text = rich(p.text);
+
+const buttons = [
+  { link: p.primary_link, cls: 'btn-light', fallbackLabel: 'Contact me' },
+  { link: p.secondary_link, cls: 'btn-outline-light', fallbackLabel: 'Find out more' },
+]
+  .map(({ link, cls, fallbackLabel }) => {
+    const url = resolveLink(link);
+    return { url, cls, label: linkLabel(link, fallbackLabel), external: isExternal(url) };
+  })
+  .filter((button) => Boolean(button.url));
+---
+
+<section class="section section--sm section--anchor cta">
+  <div class="container--narrow cta__inner reveal">
+    {heading && <Fragment set:html={heading} />}
+    {text && <div class="prose cta__text" set:html={text} />}
+    {buttons.length > 0 && (
+      <div class="btn-group cta__actions">
+        {buttons.map((button) => (
+          <a
+            class:list={['btn', button.cls]}
+            href={button.url}
+            target={button.external ? '_blank' : undefined}
+            rel={button.external ? 'noopener noreferrer' : undefined}
+          >
+            {button.label}
+          </a>
+        ))}
+      </div>
+    )}
+  </div>
+</section>
+
+<style>
+  .cta {
+    position: relative;
+    overflow: hidden;
+    /* Own stacking context so the z-index:-1 decoration sits above the band's background. */
+    isolation: isolate;
+  }
+
+  /* Decorative sage circle, an echo of the logo. Offsets use cqw (the .site container). */
+  .cta::before,
+  .cta::after {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    border-radius: 50%;
+    pointer-events: none;
+  }
+
+  .cta::before {
+    right: -6cqw;
+    bottom: -55%;
+    width: clamp(14rem, 34cqw, 30rem);
+    aspect-ratio: 1;
+    background: var(--color-sage);
+    opacity: 0.12;
+  }
+
+  .cta::after {
+    left: -3cqw;
+    top: -45%;
+    width: clamp(9rem, 20cqw, 17rem);
+    aspect-ratio: 1;
+    border: 2px solid var(--color-sage);
+    opacity: 0.16;
+  }
+
+  .cta__inner {
+    text-align: center;
+  }
+
+  .cta__inner :global(h2) {
+    margin-bottom: 0.6rem;
+  }
+
+  .cta__text {
+    max-width: 40rem;
+    margin-inline: auto;
+  }
+
+  /* .prose p would otherwise paint dark text on the deep-teal band. */
+  .cta__text :global(p) {
+    font-size: var(--fs-lead);
+    color: var(--color-on-anchor-muted);
+  }
+
+  .cta__text :global(strong) {
+    color: var(--color-white);
+  }
+
+  .cta__actions {
+    justify-content: center;
+    margin-top: clamp(1.5rem, 3vw, 2rem);
+  }
+
+  @media (max-width: 479.98px) {
+    .cta__actions .btn {
+      flex: 1 1 100%;
+    }
+  }
+</style>

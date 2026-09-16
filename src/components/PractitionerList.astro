@@ -1,0 +1,274 @@
+---
+/**
+ * `practitioner_list` slice: cards for recommended practitioners with a photo, name, role,
+ * bio and contact links (email, phone, website). Only the contact links are clickable.
+ * A lone card switches to an internal two-column layout on wide screens so the bio keeps a
+ * readable measure. Fields (primary): eyebrow, heading, text,
+ * items[{ name, role, photo, bio, email, phone, website }].
+ */
+import Icon from './Icon.astro';
+import { richText, plainText, imageSrc, resolveLink, linkLabel, isExternal } from '../lib/site';
+
+interface Props {
+  slice?: any;
+  index?: number;
+  settings?: any;
+}
+
+const { slice } = Astro.props;
+
+const fallback = {
+  eyebrow: 'Links',
+  heading: [{ type: 'heading2', text: 'Other practitioners', spans: [] }],
+  text: [
+    {
+      type: 'paragraph',
+      text: 'Practitioners from other fields who can offer a different approach and often a different focus.',
+      spans: [],
+    },
+  ],
+  items: [],
+};
+
+const p = slice?.primary ?? fallback;
+/** StructuredText → HTML, but '' for an empty field or a lone empty paragraph. */
+const rich = (field: any) => (plainText(field).trim() ? richText(field) : '');
+/** Hostname for an absolute URL, '' otherwise (site-relative links throw). */
+const hostOf = (url?: string) => {
+  try {
+    return url ? new URL(url).hostname.replace(/^www\./, '') : '';
+  } catch {
+    return '';
+  }
+};
+
+const eyebrow: string = (p.eyebrow ?? '').trim();
+const heading = rich(p.heading);
+const text = rich(p.text);
+
+const people = (Array.isArray(p.items) ? p.items : [])
+  .map((item: any, i: number) => {
+    const name: string = (item.name ?? '').trim();
+    const phone: string = (item.phone ?? '').trim();
+    const email: string = (item.email ?? '').trim();
+    const websiteUrl = resolveLink(item.website);
+    return {
+      name,
+      role: (item.role ?? '').trim(),
+      bio: rich(item.bio),
+      photo: imageSrc(item.photo),
+      alt: item.photo?.alt || name,
+      width: item.photo?.dimensions?.width,
+      height: item.photo?.dimensions?.height,
+      email,
+      phone,
+      phoneHref: phone ? `tel:${phone.replace(/\s+/g, '')}` : '',
+      websiteUrl,
+      websiteLabel: linkLabel(item.website, '') || hostOf(websiteUrl) || 'Visit website',
+      external: isExternal(websiteUrl),
+      delay: (i % 2) + 1,
+    };
+  })
+  .filter((person) => person.name || person.bio);
+---
+
+<section class="section practitioners">
+  <div class="container">
+    {(eyebrow || heading || text) && (
+      <div class="section-heading reveal">
+        {eyebrow && <span class="eyebrow">{eyebrow}</span>}
+        {heading && <Fragment set:html={heading} />}
+        {text && <div class="prose prose--muted" set:html={text} />}
+      </div>
+    )}
+
+    {people.length > 0 && (
+      <ul class="grid grid--2 practitioners__list" role="list">
+        {people.map((person) => (
+          <li class:list={['card', 'practitioner', 'reveal', `reveal-delay-${person.delay}`]}>
+            <div class="practitioner__header">
+              {person.photo ? (
+                <img
+                  class="practitioner__photo"
+                  src={person.photo}
+                  alt={person.alt}
+                  width={person.width}
+                  height={person.height}
+                  loading="lazy"
+                  decoding="async"
+                />
+              ) : (
+                <span
+                  class="practitioner__photo practitioner__photo--placeholder"
+                  aria-hidden="true"
+                >
+                  <Icon name="user" size={40} />
+                </span>
+              )}
+              <div class="practitioner__identity">
+                <h3 class="practitioner__name">{person.name}</h3>
+                {person.role && <p class="practitioner__role">{person.role}</p>}
+              </div>
+            </div>
+
+            {person.bio && <div class="prose practitioner__bio" set:html={person.bio} />}
+
+            {(person.email || person.phone || person.websiteUrl) && (
+              <ul class="practitioner__contacts" role="list">
+                {person.email && (
+                  <li>
+                    <a href={`mailto:${person.email}`}>
+                      <Icon name="mail" size={18} />
+                      <span class="sr-only">Email: </span>
+                      <span>{person.email}</span>
+                    </a>
+                  </li>
+                )}
+                {person.phone && (
+                  <li>
+                    <a href={person.phoneHref}>
+                      <Icon name="phone" size={18} />
+                      <span class="sr-only">Phone: </span>
+                      <span>{person.phone}</span>
+                    </a>
+                  </li>
+                )}
+                {person.websiteUrl && (
+                  <li>
+                    <a
+                      href={person.websiteUrl}
+                      target={person.external ? '_blank' : undefined}
+                      rel={person.external ? 'noopener noreferrer' : undefined}
+                    >
+                      <Icon name="external" size={18} />
+                      <span class="sr-only">Website: </span>
+                      <span>{person.websiteLabel}</span>
+                    </a>
+                  </li>
+                )}
+              </ul>
+            )}
+          </li>
+        ))}
+      </ul>
+    )}
+  </div>
+</section>
+
+<style>
+  .practitioners__list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .practitioner {
+    display: grid;
+    grid-template-areas:
+      'header'
+      'bio'
+      'contacts';
+    gap: 1.25rem;
+    align-content: start;
+  }
+
+  .practitioner__header {
+    grid-area: header;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .practitioner__photo {
+    flex-shrink: 0;
+    width: 7rem;
+    height: 7rem;
+    border-radius: var(--radius);
+    object-fit: cover;
+  }
+
+  .practitioner__photo--placeholder {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-sage-tint);
+    color: var(--color-teal-dark);
+  }
+
+  .practitioner__name {
+    margin-bottom: 0.25rem;
+  }
+
+  .practitioner__role {
+    margin: 0;
+    font-size: var(--fs-small);
+    color: var(--color-text-muted);
+  }
+
+  .practitioner__bio {
+    grid-area: bio;
+    max-width: 70ch;
+  }
+
+  .practitioner__contacts {
+    grid-area: contacts;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin: 0;
+    padding: 1.25rem 0 0;
+    list-style: none;
+    border-top: 1px solid var(--color-border);
+  }
+
+  /* The only clickable elements in the card. */
+  .practitioner__contacts a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-weight: 600;
+    color: var(--color-teal-dark);
+    text-decoration: none;
+    overflow-wrap: anywhere;
+  }
+
+  .practitioner__contacts a :global(svg) {
+    flex-shrink: 0;
+  }
+
+  .practitioner__contacts a:hover,
+  .practitioner__contacts a:focus-visible {
+    color: var(--color-teal-deeper);
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+  }
+
+  @media (min-width: 480px) {
+    .practitioner__header {
+      flex-direction: row;
+      align-items: center;
+      gap: 1.25rem;
+    }
+  }
+
+  /* A single practitioner would otherwise stretch one card across the whole container. */
+  @media (min-width: 768px) {
+    .practitioner:only-child {
+      grid-template-columns: minmax(14rem, 18rem) minmax(0, 1fr);
+      grid-template-areas:
+        'header bio'
+        'contacts bio';
+      column-gap: clamp(2rem, 4vw, 3rem);
+    }
+
+    .practitioner:only-child .practitioner__header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .practitioner:only-child .practitioner__contacts {
+      align-self: start;
+    }
+  }
+</style>

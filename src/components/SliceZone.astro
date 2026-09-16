@@ -1,0 +1,44 @@
+---
+/**
+ * Renders a page's slices in order by mapping `slice_type` to its component (see
+ * docs/build-plan.md). Unknown slice types render nothing, so a slice added in Prismic but
+ * not yet built never breaks the build.
+ */
+import Hero from './Hero.astro';
+import PageHeader from './PageHeader.astro';
+import IntroBlock from './IntroBlock.astro';
+import FeatureColumns from './FeatureColumns.astro';
+import ServiceCards from './ServiceCards.astro';
+import Narrative from './Narrative.astro';
+import CtaBand from './CtaBand.astro';
+import Accreditations from './Accreditations.astro';
+import PractitionerList from './PractitionerList.astro';
+import ContactDetails from './ContactDetails.astro';
+
+interface Props {
+  slices: any[];
+  settings?: any;
+}
+
+const { slices, settings } = Astro.props;
+
+const components: Record<string, any> = {
+  hero: Hero,
+  page_header: PageHeader,
+  intro_block: IntroBlock,
+  feature_columns: FeatureColumns,
+  service_cards: ServiceCards,
+  narrative: Narrative,
+  cta_band: CtaBand,
+  accreditations: Accreditations,
+  practitioner_list: PractitionerList,
+  contact_details: ContactDetails,
+};
+
+const list: any[] = Array.isArray(slices) ? slices : [];
+---
+
+{list.map((slice, index) => {
+  const Component = components[slice?.slice_type];
+  return Component ? <Component slice={slice} index={index} settings={settings} /> : null;
+})}

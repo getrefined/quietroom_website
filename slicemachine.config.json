@@ -1,0 +1,5 @@
+{
+  "repositoryName": "quietroom",
+  "adapter": "@slicemachine/adapter-next",
+  "libraries": ["./src/slices"]
+}

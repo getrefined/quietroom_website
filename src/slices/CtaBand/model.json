@@ -1,0 +1,47 @@
+{
+  "id": "cta_band",
+  "type": "SharedSlice",
+  "name": "CtaBand",
+  "description": "Full-width call-to-action band with heading, text and buttons",
+  "variations": [
+    {
+      "id": "default",
+      "name": "Default",
+      "docURL": "...",
+      "version": "initial",
+      "description": "Default",
+      "imageUrl": "",
+      "primary": {
+        "heading": {
+          "type": "StructuredText",
+          "config": {
+            "label": "Heading",
+            "single": "heading2,em"
+          }
+        },
+        "text": {
+          "type": "StructuredText",
+          "config": {
+            "label": "Text",
+            "multi": "paragraph,strong,em,hyperlink"
+          }
+        },
+        "primary_link": {
+          "type": "Link",
+          "config": {
+            "label": "Primary link",
+            "allowText": true
+          }
+        },
+        "secondary_link": {
+          "type": "Link",
+          "config": {
+            "label": "Secondary link",
+            "allowText": true
+          }
+        }
+      },
+      "items": {}
+    }
+  ]
+}

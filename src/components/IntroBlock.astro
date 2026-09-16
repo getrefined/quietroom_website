@@ -1,0 +1,199 @@
+---
+/**
+ * Slice `intro_block`: two columns, copy and a framed image (`image_position` right|left),
+ * with an optional button and a list of credential chips.
+ */
+import Icon from './Icon.astro';
+import { imageSrc, isExternal, linkLabel, resolveLink, richText, siteDefaults } from '../lib/site';
+
+interface Props {
+  slice?: any;
+  index?: number;
+  settings?: any;
+}
+
+const { slice } = Astro.props;
+const p = slice?.primary ?? {};
+
+/** Bright, plant-filled sitting room; used when no image has been uploaded. */
+const FALLBACK_IMAGE =
+  'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1200&q=80';
+
+const src = imageSrc(p.image);
+const image = src ?? FALLBACK_IMAGE;
+const imageAlt: string = src ? (p.image?.alt ?? '') : '';
+const dims = src ? p.image?.dimensions : { width: 1200, height: 800 };
+const imageLeft = p.image_position === 'left';
+
+/** Inner HTML of a single-block heading field (keeps <em>), so this component owns the tag. */
+const headingHtml = (field: any): string =>
+  richText(field)
+    .replace(/^\s*<(h[1-6]|p)[^>]*>/, '')
+    .replace(/<\/(h[1-6]|p)>\s*$/, '');
+
+const eyebrow: string = p.eyebrow || '';
+const heading = headingHtml(p.heading) || (slice ? '' : siteDefaults.practitioner);
+const text = richText(p.text) || (slice ? '' : `<p>${siteDefaults.description}</p>`);
+
+const linkHref = resolveLink(p.link);
+const linkExternal = isExternal(linkHref);
+const credentials: { label: string }[] = (Array.isArray(p.credentials) ? p.credentials : []).filter(
+  (item: any) => item?.label
+);
+---
+
+<section class="intro section">
+  <div class:list={['container', 'intro__grid', { 'intro__grid--image-left': imageLeft }]}>
+    <div class="intro__text reveal">
+      {eyebrow && <p class="eyebrow">{eyebrow}</p>}
+      {heading && <h2 class="intro__title" set:html={heading} />}
+      {text && <div class="intro__body prose" set:html={text} />}
+
+      {linkHref && (
+        <div class="intro__cta">
+          <a
+            class="btn btn-primary"
+            href={linkHref}
+            target={linkExternal ? '_blank' : undefined}
+            rel={linkExternal ? 'noopener noreferrer' : undefined}
+          >
+            {linkLabel(p.link, 'Find out more')}
+          </a>
+        </div>
+      )}
+
+      {credentials.length > 0 && (
+        <ul class="intro__credentials" role="list">
+          {credentials.map((item) => (
+            <li class="chip">
+              <span class="chip__icon">
+                <Icon name="check" size={16} strokeWidth={2.5} />
+              </span>
+              <span>{item.label}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+
+    <div class="intro__media reveal reveal-delay-1">
+      <div class="intro__frame">
+        <img
+          src={image}
+          alt={imageAlt}
+          width={dims?.width}
+          height={dims?.height}
+          loading="lazy"
+          decoding="async"
+        />
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .intro__grid {
+    display: grid;
+    grid-template-areas:
+      'text'
+      'media';
+    gap: clamp(2.5rem, 6vw, 4.5rem);
+    align-items: center;
+  }
+  .intro__grid--image-left {
+    grid-template-areas:
+      'media'
+      'text';
+  }
+
+  .intro__text {
+    grid-area: text;
+  }
+  .intro__text > :last-child {
+    margin-bottom: 0;
+  }
+
+  .intro__title {
+    margin-bottom: 1rem;
+  }
+
+  .intro__body {
+    margin-bottom: 1.5rem;
+  }
+
+  .intro__cta {
+    margin-bottom: 1.5rem;
+  }
+
+  .intro__credentials {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0 0 1.5rem;
+    padding: 0;
+    list-style: none;
+  }
+  .chip {
+    display: inline-flex;
+    align-items: flex-start;
+    gap: 0.45rem;
+    padding: 0.4rem 0.85rem 0.4rem 0.65rem;
+    border-radius: var(--radius-pill);
+    background: var(--color-sage-tint);
+    font-size: var(--fs-small);
+    font-weight: 500;
+    line-height: 1.4;
+    color: var(--color-anchor);
+  }
+  .chip__icon {
+    display: inline-flex;
+    flex-shrink: 0;
+    margin-top: 0.2em;
+    color: var(--color-teal-dark);
+  }
+
+  .intro__media {
+    --offset: 1rem;
+    position: relative;
+    grid-area: media;
+  }
+  /* Decorative sage block offset behind the frame. */
+  .intro__media::before {
+    content: '';
+    position: absolute;
+    inset: var(--offset) calc(-1 * var(--offset)) calc(-1 * var(--offset)) var(--offset);
+    z-index: 0;
+    border-radius: var(--radius-lg);
+    background: var(--color-sage-tint);
+  }
+  .intro__grid--image-left .intro__media::before {
+    inset: var(--offset) var(--offset) calc(-1 * var(--offset)) calc(-1 * var(--offset));
+  }
+
+  .intro__frame {
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    background: var(--color-bg-alt);
+    box-shadow: var(--shadow);
+  }
+  .intro__frame img {
+    width: 100%;
+    height: auto;
+  }
+
+  @media (min-width: 768px) {
+    .intro__grid {
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+      grid-template-areas: 'text media';
+    }
+    .intro__grid--image-left {
+      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+      grid-template-areas: 'media text';
+    }
+    .intro__media {
+      --offset: 1.5rem;
+    }
+  }
+</style>

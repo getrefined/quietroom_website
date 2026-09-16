@@ -1,0 +1,377 @@
+---
+/**
+ * Site navigation bar.
+ *
+ * Pinned to the top of the viewport with `position: sticky` rather than `fixed`: the `.site`
+ * wrapper is a size container (`container-type: inline-size`), and in browsers where that
+ * still applies layout containment a fixed bar inside it would scroll away with the page.
+ * Sticky behaves the same for the user and needs no spacer element.
+ *
+ * `transparent` (home): the bar overlays the hero (negative bottom margin) and turns solid
+ * once the page has scrolled ~40px. Otherwise it is always solid and occupies its own height.
+ */
+import Icon from './Icon.astro';
+import Logo from './Logo.astro';
+import { href, nav as navItems, pathFor, isCurrent, siteDefaults } from '../lib/site';
+
+interface Props {
+  transparent?: boolean;
+  currentPath?: string;
+  settings?: any;
+}
+
+const { transparent = false, currentPath, settings } = Astro.props;
+
+const siteName: string = settings?.site_name || siteDefaults.name;
+const phone: string = settings?.phone || siteDefaults.phone;
+
+/** "07797 736595" → "tel:+447797736595" (Jersey shares the UK +44 country code). */
+function telHref(value: string): string {
+  const digits = value.replace(/[^\d+]/g, '');
+  return `tel:${digits.startsWith('0') ? `+44${digits.slice(1)}` : digits}`;
+}
+---
+
+<header class:list={['nav', transparent ? 'nav--transparent' : 'nav--solid']} data-nav>
+  <div class="nav__inner container">
+    <a class="nav__brand" href={href('/')} aria-label={`${siteName}, home`}>
+      <Logo variant="light" height={44} />
+    </a>
+
+    <button
+      class="nav__toggle"
+      type="button"
+      aria-expanded="false"
+      aria-controls="nav-menu"
+      aria-label="Open menu"
+      data-nav-toggle
+    >
+      <span class="nav__icon nav__icon--menu">
+        <Icon name="menu" size={26} />
+      </span>
+      <span class="nav__icon nav__icon--close">
+        <Icon name="close" size={26} />
+      </span>
+    </button>
+
+    <nav class="nav__menu" id="nav-menu" aria-label="Primary" data-nav-menu>
+      <ul class="nav__list" role="list">
+        {navItems.map((item) => (
+          <li>
+            <a
+              href={href(item.path)}
+              aria-current={isCurrent(item.path, currentPath) ? 'page' : undefined}
+            >
+              {item.label}
+            </a>
+          </li>
+        ))}
+      </ul>
+      <div class="nav__actions">
+        <a class="btn btn-light nav__book" href={href(pathFor('contact'))}>
+          Book a session
+        </a>
+        <a class="nav__phone" href={telHref(phone)}>
+          <span class="nav__phone-icon">
+            <Icon name="phone" size={18} />
+          </span>
+          <span>{phone}</span>
+        </a>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<script>
+  const header = document.querySelector<HTMLElement>('[data-nav]');
+  const toggle = header?.querySelector<HTMLButtonElement>('[data-nav-toggle]');
+  const menu = header?.querySelector<HTMLElement>('[data-nav-menu]');
+
+  if (header) {
+    const onScroll = () => header.classList.toggle('is-scrolled', window.scrollY > 40);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+  }
+
+  if (header && toggle && menu) {
+    let open = false;
+
+    const setOpen = (next: boolean) => {
+      open = next;
+      header.classList.toggle('is-open', open);
+      toggle.setAttribute('aria-expanded', String(open));
+      toggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+      document.body.style.overflow = open ? 'hidden' : '';
+    };
+
+    toggle.addEventListener('click', () => setOpen(!open));
+
+    menu.addEventListener('click', (event) => {
+      if ((event.target as HTMLElement).closest('a')) setOpen(false);
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && open) {
+        setOpen(false);
+        toggle.focus();
+      }
+    });
+
+    // Leaving the mobile range while the overlay is open must not leave the body locked.
+    const desktop = window.matchMedia('(min-width: 1024px)');
+    desktop.addEventListener('change', (event) => {
+      if (event.matches && open) setOpen(false);
+    });
+  }
+</script>
+
+<style>
+  .nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    height: var(--nav-height);
+    color: var(--color-white);
+    background-color: var(--color-anchor);
+    transition:
+      background-color var(--transition),
+      box-shadow var(--transition);
+  }
+
+  /* Legibility gradient, only shown while the bar is transparent over the hero. */
+  .nav::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(to bottom, rgba(13, 59, 64, 0.6), rgba(13, 59, 64, 0));
+    opacity: 0;
+    transition: opacity var(--transition);
+    pointer-events: none;
+  }
+
+  .nav--transparent {
+    margin-bottom: calc(-1 * var(--nav-height));
+  }
+  .nav--transparent:not(.is-scrolled):not(.is-open) {
+    background-color: transparent;
+  }
+  .nav--transparent:not(.is-scrolled):not(.is-open)::before {
+    opacity: 1;
+  }
+
+  .nav.is-scrolled {
+    box-shadow: var(--shadow-sm);
+  }
+
+  .nav__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    height: 100%;
+  }
+
+  .nav__brand {
+    position: relative;
+    z-index: 3;
+    display: inline-flex;
+    text-decoration: none;
+    border-radius: var(--radius-sm);
+  }
+
+  .nav__toggle {
+    position: relative;
+    z-index: 3;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    margin-right: -0.5rem;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    border-radius: var(--radius-sm);
+    color: var(--color-white);
+    cursor: pointer;
+  }
+  .nav__icon {
+    display: inline-flex;
+  }
+  .nav__icon--close {
+    display: none;
+  }
+  .nav.is-open .nav__icon--menu {
+    display: none;
+  }
+  .nav.is-open .nav__icon--close {
+    display: inline-flex;
+  }
+
+  /* Mobile: full-screen overlay, anchored to the sticky bar so it always covers the viewport. */
+  .nav__menu {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(1.5rem, 5vh, 2.5rem);
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    padding: calc(var(--nav-height) + 1.5rem) var(--gutter) 2rem;
+    overflow-y: auto;
+    background: var(--color-anchor);
+    visibility: hidden;
+    opacity: 0;
+    transform: translateY(-0.5rem);
+    transition:
+      opacity 220ms ease,
+      transform 220ms ease,
+      visibility 0s linear 220ms;
+  }
+  .nav.is-open .nav__menu {
+    visibility: visible;
+    opacity: 1;
+    transform: none;
+    transition:
+      opacity 220ms ease,
+      transform 220ms ease;
+  }
+
+  .nav__list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .nav__list a {
+    display: inline-block;
+    padding: 0.35rem 0;
+    font-family: var(--font-heading);
+    font-size: clamp(1.5rem, 5vw, 1.875rem);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--color-white);
+    text-decoration: none;
+  }
+  .nav__list a:hover {
+    text-decoration: underline;
+    text-decoration-color: rgba(255, 255, 255, 0.55);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.3em;
+  }
+  .nav__list a[aria-current='page'] {
+    text-decoration: underline;
+    text-decoration-color: var(--color-sage);
+    text-decoration-thickness: 3px;
+    text-underline-offset: 0.3em;
+  }
+
+  .nav__actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.25rem;
+  }
+  .nav__phone {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--font-heading);
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--color-white);
+    text-decoration: none;
+  }
+  .nav__phone:hover {
+    color: var(--color-sage);
+  }
+  .nav__phone-icon {
+    display: inline-flex;
+    color: var(--color-sage);
+  }
+
+  .nav a:focus-visible,
+  .nav__toggle:focus-visible {
+    outline-color: var(--color-sage);
+  }
+
+  @media (min-width: 1024px) {
+    .nav__toggle {
+      display: none;
+    }
+    .nav__menu {
+      position: static;
+      z-index: auto;
+      flex-direction: row;
+      align-items: center;
+      justify-content: flex-end;
+      gap: clamp(0.75rem, 1.5vw, 1.5rem);
+      width: auto;
+      height: auto;
+      margin-left: auto;
+      padding: 0;
+      overflow: visible;
+      background: transparent;
+      visibility: visible;
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+    .nav__list {
+      flex-direction: row;
+      align-items: center;
+      gap: 0.125rem;
+    }
+    .nav__list a {
+      padding: 0.5rem 0.55rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      letter-spacing: 0;
+      white-space: nowrap;
+    }
+    .nav__list a:hover {
+      text-underline-offset: 0.5em;
+    }
+    .nav__list a[aria-current='page'] {
+      text-decoration-thickness: 2px;
+      text-underline-offset: 0.5em;
+    }
+    .nav__actions {
+      flex-direction: row;
+      align-items: center;
+    }
+    .nav__book {
+      min-height: 2.5rem;
+      padding: 0.55rem 1.1rem;
+      font-size: 0.9rem;
+    }
+    .nav__phone {
+      display: none;
+    }
+  }
+
+  @media (min-width: 1200px) {
+    .nav__list {
+      gap: 0.375rem;
+    }
+    .nav__list a {
+      padding-inline: 0.7rem;
+      font-size: 0.9375rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .nav,
+    .nav::before,
+    .nav__menu,
+    .nav.is-open .nav__menu {
+      transition: none;
+    }
+  }
+</style>

@@ -1,0 +1,200 @@
+---
+/**
+ * `service_cards` slice: a grid of cards with a sage icon badge, an h3, text and an optional
+ * arrow link. Only the link is clickable, so cards without one carry no hover state.
+ * Fields (primary): eyebrow, heading, text, columns ('3' | '2'),
+ * items[{ icon, title, text, link }].
+ */
+import Icon from './Icon.astro';
+import { richText, plainText, resolveLink, linkLabel, isExternal } from '../lib/site';
+
+interface Props {
+  slice?: any;
+  index?: number;
+  settings?: any;
+}
+
+const { slice } = Astro.props;
+
+const fallback = {
+  eyebrow: 'How I can help',
+  heading: [{ type: 'heading2', text: 'Psychotherapy, counselling and supervision', spans: [] }],
+  text: [],
+  columns: '3',
+  items: [
+    {
+      icon: 'leaf',
+      title: 'Psychotherapy and counselling',
+      text: [
+        {
+          type: 'paragraph',
+          text: 'Individual therapy for adults and young people over 11, in St Helier or online.',
+          spans: [],
+        },
+      ],
+      link: {
+        link_type: 'Document',
+        type: 'page',
+        uid: 'psychotherapy',
+        text: 'About psychotherapy',
+      },
+    },
+    {
+      icon: 'users',
+      title: 'Clinical supervision',
+      text: [
+        {
+          type: 'paragraph',
+          text: 'Supportive supervision for practitioners, trainees and agencies, one to one or in groups.',
+          spans: [],
+        },
+      ],
+      link: { link_type: 'Document', type: 'page', uid: 'supervision', text: 'About supervision' },
+    },
+    {
+      icon: 'calendar',
+      title: 'Booking a session',
+      text: [
+        {
+          type: 'paragraph',
+          text: 'A free initial consultation to talk about what you need and decide whether working together feels right.',
+          spans: [],
+        },
+      ],
+      link: { link_type: 'Document', type: 'page', uid: 'booking', text: 'How booking works' },
+    },
+  ],
+};
+
+const p = slice?.primary ?? fallback;
+/** StructuredText → HTML, but '' for an empty field or a lone empty paragraph. */
+const rich = (field: any) => (plainText(field).trim() ? richText(field) : '');
+
+const eyebrow: string = (p.eyebrow ?? '').trim();
+const heading = rich(p.heading);
+const text = rich(p.text);
+const columns = String(p.columns ?? '3') === '2' ? 2 : 3;
+
+const cards = (Array.isArray(p.items) ? p.items : []).map((item: any, i: number) => {
+  const url = resolveLink(item.link);
+  return {
+    icon: item.icon || 'leaf',
+    title: (item.title ?? '').trim(),
+    text: rich(item.text),
+    url,
+    label: url ? linkLabel(item.link, 'Find out more') : '',
+    external: isExternal(url),
+    delay: (i % columns) + 1,
+  };
+});
+---
+
+<section class="section service-cards">
+  <div class="container">
+    {(eyebrow || heading || text) && (
+      <div class="section-heading reveal">
+        {eyebrow && <span class="eyebrow">{eyebrow}</span>}
+        {heading && <Fragment set:html={heading} />}
+        {text && <div class="prose prose--muted" set:html={text} />}
+      </div>
+    )}
+
+    {cards.length > 0 && (
+      <ul
+        class:list={['grid', columns === 2 ? 'grid--2' : 'grid--3', 'service-cards__list']}
+        role="list"
+      >
+        {cards.map((card) => (
+          <li class:list={['card', 'service-card', 'reveal', `reveal-delay-${card.delay}`]}>
+            <span class="icon-badge" aria-hidden="true">
+              <Icon name={card.icon} />
+            </span>
+            <h3 class="service-card__title">{card.title}</h3>
+            {card.text && <div class="prose service-card__text" set:html={card.text} />}
+            {card.url && (
+              <a
+                class="service-card__link"
+                href={card.url}
+                target={card.external ? '_blank' : undefined}
+                rel={card.external ? 'noopener noreferrer' : undefined}
+              >
+                {card.label}
+                <Icon name="arrow-right" size={18} />
+              </a>
+            )}
+          </li>
+        ))}
+      </ul>
+    )}
+  </div>
+</section>
+
+<style>
+  .service-cards__list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  /* Flex column so the arrow link sits on the same baseline across a row of cards. */
+  .service-card {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .service-card .icon-badge {
+    margin-bottom: 1.25rem;
+  }
+
+  .service-card__title {
+    margin-bottom: 0.5rem;
+  }
+
+  .service-card__text {
+    margin-bottom: 1.25rem;
+  }
+
+  .service-card__text :global(p) {
+    color: var(--color-text-muted);
+  }
+
+  /* The only interactive element in the card. AA teal, bold, with an arrow. */
+  .service-card__link {
+    display: inline-flex;
+    align-items: center;
+    align-self: flex-start;
+    gap: 0.45rem;
+    margin-top: auto;
+    font-family: var(--font-heading);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--color-teal-dark);
+    text-decoration: none;
+  }
+
+  .service-card__link svg {
+    flex-shrink: 0;
+    transition: transform var(--transition);
+  }
+
+  .service-card__link:hover,
+  .service-card__link:focus-visible {
+    color: var(--color-teal-deeper);
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.2em;
+  }
+
+  .service-card__link:hover svg {
+    transform: translateX(3px);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .service-card__link svg {
+      transition: none;
+    }
+    .service-card__link:hover svg {
+      transform: none;
+    }
+  }
+</style>

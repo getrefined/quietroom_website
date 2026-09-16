@@ -1,0 +1,104 @@
+{
+  "id": "feature_columns",
+  "type": "SharedSlice",
+  "name": "FeatureColumns",
+  "description": "Three columns with icon, title and text",
+  "variations": [
+    {
+      "id": "default",
+      "name": "Default",
+      "docURL": "...",
+      "version": "initial",
+      "description": "Default",
+      "imageUrl": "",
+      "primary": {
+        "eyebrow": {
+          "type": "Text",
+          "config": {
+            "label": "Eyebrow"
+          }
+        },
+        "heading": {
+          "type": "StructuredText",
+          "config": {
+            "label": "Heading",
+            "single": "heading2,em"
+          }
+        },
+        "text": {
+          "type": "StructuredText",
+          "config": {
+            "label": "Text",
+            "multi": "paragraph,strong,em,hyperlink"
+          }
+        },
+        "background": {
+          "type": "Select",
+          "config": {
+            "label": "Background",
+            "options": ["white", "grey", "sage"],
+            "default_value": "white"
+          }
+        },
+        "items": {
+          "type": "Group",
+          "config": {
+            "label": "Items",
+            "fields": {
+              "icon": {
+                "type": "Select",
+                "config": {
+                  "label": "Icon",
+                  "options": [
+                    "leaf",
+                    "feather",
+                    "heart",
+                    "shield",
+                    "compass",
+                    "chat",
+                    "users",
+                    "user",
+                    "calendar",
+                    "book",
+                    "sun",
+                    "moon",
+                    "home",
+                    "smile",
+                    "clock",
+                    "phone",
+                    "mail",
+                    "map-pin",
+                    "arrow-right",
+                    "check",
+                    "menu",
+                    "close",
+                    "external",
+                    "video",
+                    "award",
+                    "briefcase",
+                    "life-buoy"
+                  ],
+                  "default_value": "leaf"
+                }
+              },
+              "title": {
+                "type": "Text",
+                "config": {
+                  "label": "Title"
+                }
+              },
+              "text": {
+                "type": "StructuredText",
+                "config": {
+                  "label": "Text",
+                  "multi": "paragraph,strong,em,hyperlink"
+                }
+              }
+            }
+          }
+        }
+      },
+      "items": {}
+    }
+  ]
+}

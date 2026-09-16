@@ -1,0 +1,11 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SliceZone from '../components/SliceZone.astro';
+import { loadPage, loadSettings } from '../lib/prismic';
+
+const [page, settings] = await Promise.all([loadPage('supervision'), loadSettings()]);
+---
+
+<BaseLayout title={page.title} description={page.description} settings={settings}>
+  <SliceZone slices={page.slices} settings={settings} />
+</BaseLayout>
