@@ -507,7 +507,7 @@ export const pages = {
             icon: 'phone',
             title: 'Get in touch',
             text: para(
-              'Call 07797 736595, email christopher@thequietroom.co.uk or use the contact form.'
+              'Call [07797 736595](tel:+447797736595), email [christopher@thequietroom.co.uk](mailto:christopher@thequietroom.co.uk) or use the [contact form](/contact/).'
             ),
           },
           {
