@@ -138,8 +138,8 @@ mobile, `aria-current="page"` on the active link, `aria-expanded` on the toggle.
 `Footer` (`src/components/Footer.astro`, props `{ settings?: any }`) — three columns like
 crs.je (Quiet Room: nav links · Services: Psychotherapy/Supervision/Booking/Links ·
 Contact: address/phone/email + Privacy Statement), accreditation logos on white chips,
-bottom bar "© {year} Christopher Journeaux. All rights reserved." + "Site by Refined"
-(link https://getrefined.com). Uses `settings` (Prismic `settings` data or the fallback
+bottom bar "© {year} Christopher Journeaux. All rights reserved." + "Website by The Refinery"
+(link https://www.therefinery.je). Uses `settings` (Prismic `settings` data or the fallback
 from `src/data/pages.mjs`) for contact details.
 `SliceZone` (`src/components/SliceZone.astro`, props `{ slices: any[]; settings?: any }`)
 — maps `slice_type` to the components above; unknown types render nothing.
